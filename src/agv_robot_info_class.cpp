@@ -1,3 +1,4 @@
+#include "hydraulic_system_monitor.cpp"
 #include "robot_info_class.cpp"
 
 class AGVRobotInfo : public RobotInfo {
@@ -13,7 +14,11 @@ protected:
   int maximum_payload;
 
 private:
+  HydraulicSystemMonitor hydraulic_sytem_agent;
 };
+
+// ###############################
+// Function defintion for AGVRobotInfo
 
 // Constructor
 inline AGVRobotInfo::AGVRobotInfo(ros::NodeHandle &nh,
@@ -26,7 +31,11 @@ inline AGVRobotInfo::AGVRobotInfo(ros::NodeHandle &nh,
                 firmware_version) {
 
   ROS_INFO("Class AGVRobotInfo created!");
+
   this->maximum_payload = maximum_payload;
+
+  // Call HydraulicSystemMonitor class constructor
+  hydraulic_sytem_agent = HydraulicSystemMonitor();
 }
 
 inline void AGVRobotInfo::publish_data() {
@@ -38,6 +47,19 @@ inline void AGVRobotInfo::publish_data() {
   msg_tmpl.data_field_04 = "firmware_version: " + this->firmware_version;
   msg_tmpl.data_field_05 =
       "maximum_payload: " + std::to_string(this->maximum_payload) + " Kg";
+
+  // Store hydraulic system info
+  std::string temperature =
+      this->hydraulic_sytem_agent.get_hydraulic_oil_temperature();
+  std::string tank_fill_level =
+      this->hydraulic_sytem_agent.get_hydraulic_oil_tank_fill_level();
+  std::string oil_pressure =
+      this->hydraulic_sytem_agent.get_hydraulic_oil_pressure();
+
+  msg_tmpl.data_field_06 = "hydraulic_oil_temperature: " + temperature + "C";
+  msg_tmpl.data_field_07 =
+      "hydraulic_oil_tank_fill_level: " + tank_fill_level + "%";
+  msg_tmpl.data_field_08 = "hydraulic_oil_pressure: " + oil_pressure + " bar";
 
   pub.publish(msg_tmpl);
 }
